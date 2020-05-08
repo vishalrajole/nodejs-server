@@ -43,12 +43,16 @@ router.patch("/tasks/:id", async (req, res) => {
     return res.status(400).send({ error: "Invalid task data" });
 
   try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).send();
+    taskKeys.forEach((key) => (task[key] = req.body[key]));
+    await task.save();
+    /* direct updates bypass middlewares
     const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
-    if (!task) return res.status(404).send();
-
+    */
     res.send(task);
   } catch (error) {
     res.status(500).send(error);

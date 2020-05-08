@@ -42,12 +42,17 @@ router.patch("/users/:id", async (req, res) => {
     return res.status(400).send({ error: "Invalid user data" });
 
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).send();
 
+    userKeys.forEach((key) => (user[key] = req.body[key]));
+    await user.save();
+    /* direct updates bypass middlewares
+     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+       new: true,
+       runValidators: true,
+     });
+    */
     res.send(user);
   } catch (error) {
     res.status(500).send(error);
@@ -62,6 +67,18 @@ router.delete("/users/:id", async (req, res) => {
     res.send(user);
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+router.post("/user/login", async (req, res) => {
+  try {
+    const user = await User.findByCredentials({
+      email: req.body.email,
+      password: req.body.password,
+    });
+    res.send(user);
+  } catch (error) {
+    res.status(400).send(error);
   }
 });
 
