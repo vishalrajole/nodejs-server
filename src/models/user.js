@@ -5,47 +5,52 @@ const jwt = require("jsonwebtoken");
 const Task = require("./task");
 
 const hashRounds = 8;
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  age: {
-    type: Number,
-    default: 0,
-    validate: (value) => {
-      if (value < 0) throw new Error("Age must be a positive number");
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
-    validate: (value) => {
-      if (!validate.isEmail(value)) throw new Error("Email is not valid");
-    },
-  },
-  password: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 7,
-    validate: (value) => {
-      if (value.toLowerCase().includes("password"))
-        throw new Error("password should not contain 'password'");
-    },
-  },
-  tokens: [
-    {
-      token: {
-        type: String,
-        required: true,
+    age: {
+      type: Number,
+      default: 0,
+      validate: (value) => {
+        if (value < 0) throw new Error("Age must be a positive number");
       },
     },
-  ],
-});
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      validate: (value) => {
+        if (!validate.isEmail(value)) throw new Error("Email is not valid");
+      },
+    },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 7,
+      validate: (value) => {
+        if (value.toLowerCase().includes("password"))
+          throw new Error("password should not contain 'password'");
+      },
+    },
+    tokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true, // adds createdAt, updatedAt by default
+  }
+);
 
 // virtual properties, relationship between user & tasks
 userSchema.virtual("tasks", {

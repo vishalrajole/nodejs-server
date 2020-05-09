@@ -16,10 +16,32 @@ router.post("/tasks", auth, async (req, res) => {
   }
 });
 
+/* GET /tasks?completed=true&limit=10&skip=10&sort=createdAt:desc */
 router.get("/tasks", auth, async (req, res) => {
+  const queryParams = {};
+  if (req.query.completed) {
+    queryParams.completed = req.query.completed === "true";
+  }
+
+  const paginateOptions = {
+    limit: parseInt(req.query.limit),
+    skip: parseInt(req.query.skip),
+  };
+
+  const sortOptions = {};
+  if (req.query.sort) {
+    const parts = req.query.sort.split(":");
+    sortOptions[parts[0]] = parts[1] === "desc" ? -1 : 1;
+  }
   try {
-    const tasks = await Task.find({ owner: req.user._id });
-    res.send(tasks);
+    const tasks = await req.user
+      .populate({
+        path: "tasks",
+        match: queryParams,
+        options: { ...paginateOptions, sort: sortOptions },
+      })
+      .execPopulate();
+    res.send(req.user.tasks);
   } catch (error) {
     res.stutus(500).send();
   }
