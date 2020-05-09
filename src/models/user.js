@@ -38,6 +38,9 @@ const userSchema = new mongoose.Schema(
           throw new Error("password should not contain 'password'");
       },
     },
+    avatar: {
+      type: Buffer,
+    },
     tokens: [
       {
         token: {
@@ -102,6 +105,7 @@ userSchema.methods.toJSON = function () {
   const publicUser = user.toObject();
   delete publicUser.password;
   delete publicUser.tokens;
+  delete publicUser.avatar;
   return publicUser;
 };
 

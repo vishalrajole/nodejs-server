@@ -1,7 +1,11 @@
 const express = require("express");
+const multer = require("multer");
+const sharp = require("sharp"); // image processing
 const User = require("../models/user");
 const router = new express.Router();
 const auth = require("../middlewares/auth");
+
+const fileTypeSupported = /\.(jpg|jpeg|png)$/;
 
 router.post("/user/login", async (req, res) => {
   try {
@@ -74,6 +78,56 @@ router.patch("/user", auth, async (req, res) => {
 router.delete("/user", auth, async (req, res) => {
   await req.user.remove();
   res.send(req.user);
+});
+
+router.get("/user/:id/avatar", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || !user.avatar) throw new Error();
+
+    res.set("Content-Type", "image/png");
+    res.send(user.avatar);
+  } catch (error) {
+    res.status(404).send(error);
+  }
+});
+const upload = multer({
+  // dest: "avatar", if dest present, it will directly store file to give destination, else multer will return buffer to endpoint
+  limits: {
+    fileSize: 1000000, // file size in bytes
+  },
+  fileFilter: (req, file, callback) => {
+    if (!file.originalname.match(fileTypeSupported)) {
+      return callback(new Error("file type not suported"));
+    }
+    callback(undefined, true);
+  },
+});
+
+// upload avatar image with 2 middlewares auth & upload.single
+router.post(
+  "/user/avatar",
+  auth,
+  upload.single("avatar"),
+  async (req, res) => {
+    const modifiedImageBuffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    req.user.avatar = modifiedImageBuffer; // buffer contains file buffer data
+    await req.user.save();
+    res.send();
+  },
+  // express error handling
+  (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+  }
+);
+
+router.delete("/user/avatar", auth, async (req, res) => {
+  req.user.avatar = undefined;
+  await req.user.save();
+  res.send();
 });
 
 module.exports = router;
