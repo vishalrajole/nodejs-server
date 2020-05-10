@@ -4,6 +4,7 @@ const bycrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Task = require("./task");
 
+const jwtSecret = process.env.JWT_SECRET;
 const hashRounds = 8;
 const userSchema = new mongoose.Schema(
   {
@@ -92,7 +93,7 @@ userSchema.statics.findByCredentials = async ({ email, password }) => {
 // instance methods
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign({ _id: user._id.toString() }, "secret");
+  const token = jwt.sign({ _id: user._id.toString() }, jwtSecret);
   user.tokens = user.tokens.concat({ token });
   await user.save();
 

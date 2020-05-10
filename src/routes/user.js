@@ -2,6 +2,8 @@ const express = require("express");
 const multer = require("multer");
 const sharp = require("sharp"); // image processing
 const User = require("../models/user");
+const { sendWelcomeMail, sendCancelationMail } = require("../utils/sendgrid");
+
 const router = new express.Router();
 const auth = require("../middlewares/auth");
 
@@ -46,6 +48,7 @@ router.post("/user", async (req, res) => {
   const user = new User(req.body);
   try {
     const token = await user.generateAuthToken();
+    sendWelcomeMail({ email: user.email, name: user.name });
     await user.save(user);
     res.status(201).send({ user, token });
   } catch (error) {
@@ -77,6 +80,7 @@ router.patch("/user", auth, async (req, res) => {
 
 router.delete("/user", auth, async (req, res) => {
   await req.user.remove();
+  sendCancelationMail({ email: req.user.email, name: req.user.name });
   res.send(req.user);
 });
 
